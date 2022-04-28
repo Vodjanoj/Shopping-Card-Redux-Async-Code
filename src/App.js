@@ -5,7 +5,7 @@ import Layout from "./components/Layout/Layout";
 import Products from "./components/Shop/Products";
 
 import Notification from "./components/UI/Notification";
-import { sendCartData } from "./store/cart-slice";
+import { sendCartData, fetchCartData } from "./store/cart-actions";
 
 // we define isInitial it outside of my component function so that this does not change.
 // And it's not re-initialized if the component renders again, instead this will be initialized when this file is parsed for the first time.
@@ -17,6 +17,10 @@ function App() {
   const isShowCart = useSelector((state) => state.ui.isShowCart);
   const cart = useSelector((state) => state.cart);
   const notification = useSelector((state) => state.ui.notification);
+
+  useEffect(() => {
+    dispatch(fetchCartData());
+  }, [dispatch]);
 
   // we wanna stick to the existing approach. We wanna dispatch the addItemToCart action
   // and do all this heavy work inside of the Reducer function. But if we now wanna sync our new state to the server,
@@ -32,7 +36,7 @@ function App() {
       isInitial = false;
       return;
     }
-    dispatch(sendCartData(cart))
+    dispatch(sendCartData(cart));
   }, [cart, dispatch]);
 
   return (
