@@ -1,5 +1,6 @@
 import { uiActions } from "./ui-slice";
-import { cartActions } from './cart-slice'
+import { cartActions } from "./cart-slice";
+
 
 export const fetchCartData = () => {
   return async (dispatch) => {
@@ -15,7 +16,7 @@ export const fetchCartData = () => {
 
       // I am now interested in the data
       const data = await response.json();
-   
+
       // we don't need to transform that Firebase data first because it has the format, we sent to Firebase earlier
       // That's different from other sections in the course, there we had to transform Firebase data because there we used post!! for a sending our data
       // not put as we're doing here and hence we let Firebase create a list of data which turned out to be an object when we fetched it.
@@ -25,8 +26,17 @@ export const fetchCartData = () => {
     };
 
     try {
-     const cartData = await fetchData();
-     dispatch(cartActions.replaceCart(cartData))
+      const cartData = await fetchData();
+      dispatch(cartActions.replaceCart({
+        // We should make sure, that the payload we pass to replaceCart, is a object which always has a items key, which is either cartsData.items
+        // or if that should be undefined and therefore a falsy an empty array.
+        // in other case we would just unable to operate with array on cart-slice and etc, this wouldn't work (state.items.find((item) => item.id === newItem.id))
+        // as there woulnd't be an item key on Firebase fetching data initialy when a cart is empty (the thing is when we delete everything from the cart,
+        // it is sync with Fireabase and ultimatetely item key it is being deleted localy and therefore in Firebase, then when we fetch a data from Firebase
+        // and try adding a new item to cart let's say we get an error in reducer(no item key))
+        items: cartData.items || [],
+        totalQuantity: cartData.totalQuantity,
+      }));
     } catch (error) {
       dispatch(
         uiActions.showNotification({
@@ -83,7 +93,11 @@ export const sendCartData = (cart) => {
         "https://react-http-version-default-rtdb.firebaseio.com/cart.json",
         {
           method: "PUT",
-          body: JSON.stringify(cart),
+          // we don't need to send cart.changed to Firebase, so we send only propertines listed below
+          body: JSON.stringify({
+            items: cart.items,
+            totalQuantity: cart.totalQuantity,
+          }),
         }
       );
 
